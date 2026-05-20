@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: yomu-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./yomu-infra/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: yomu-rabbitmq
@@ -15,3 +33,77 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  yomu-core-api:
+    build:
+      context: ./yomu-core-api
+      dockerfile: Dockerfile
+    container_name: yomu-core-api
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_VHOST: /
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  yomu-gateway:
+    build:
+      context: ./yomu-gateway
+      dockerfile: Dockerfile
+    container_name: yomu-gateway
+    ports:
+      - "8000:8080"
+    environment:
+      CORE_API_URL: http://yomu-core-api:8080
+      GAMIFICATION_ENGINE_URL: http://yomu-gamification-engine:8081
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      YOMU_WEB_URL: http://yomu-web:3000
+    depends_on:
+      - yomu-core-api
+      - yomu-gamification-engine
+
+  yomu-gamification-engine:
+    build:
+      context: ./yomu-gamification-engine
+      dockerfile: Dockerfile
+    container_name: yomu-gamification-engine
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      CLOUDAMQP_URL: amqp://guest:guest@rabbitmq:5672
+      APP_PORT: 8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  yomu-web:
+    build:
+      context: ./yomu-web
+      dockerfile: Dockerfile
+    container_name: yomu-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://yomu-gateway:8080
+    depends_on:
+      - yomu-gateway
+
+volumes:
+  postgres_data:
