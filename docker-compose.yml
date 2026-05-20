@@ -51,6 +51,7 @@ services:
       RABBITMQ_PASSWORD: guest
       RABBITMQ_VHOST: /
       JWT_SECRET: ${JWT_SECRET:-yomu-dev-secret-key-change-in-production-min32chars}
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-yomu-dev-gateway-secret-change-in-production}
       PORT: 8080
     depends_on:
       postgres:
@@ -64,12 +65,14 @@ services:
       dockerfile: Dockerfile
     container_name: yomu-gateway
     ports:
-      - "8000:8080"
+      - "10000:10000"
     environment:
       CORE_API_URL: http://yomu-core-api:8080
       GAMIFICATION_ENGINE_URL: http://yomu-gamification-engine:8081
       JWT_SECRET: ${JWT_SECRET:-yomu-dev-secret-key-change-in-production-min32chars}
-      YOMU_WEB_URL: http://yomu-web:3000
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-yomu-dev-gateway-secret-change-in-production}
+      YOMU_WEB_URL: http://localhost:3000
+      PORT: 10000
     depends_on:
       - yomu-core-api
       - yomu-gamification-engine
@@ -84,6 +87,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       CLOUDAMQP_URL: amqp://guest:guest@rabbitmq:5672
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-yomu-dev-gateway-secret-change-in-production}
       APP_PORT: 8081
     depends_on:
       postgres:
@@ -95,11 +99,13 @@ services:
     build:
       context: ../yomu-web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:10000
     container_name: yomu-web
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://yomu-gateway:8080
+      NEXT_PUBLIC_API_URL: http://localhost:10000
     depends_on:
       - yomu-gateway
 

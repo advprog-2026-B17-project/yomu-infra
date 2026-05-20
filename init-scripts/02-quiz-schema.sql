@@ -1,4 +1,4 @@
-CREATE SCHEMA quiz;
+CREATE SCHEMA IF NOT EXISTS quiz;
 
 CREATE TABLE quiz.categories (
     id SERIAL PRIMARY KEY,
