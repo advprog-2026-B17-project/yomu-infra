@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -12,7 +10,7 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./yomu-infra/init-scripts:/docker-entrypoint-initdb.d
+      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -36,7 +34,7 @@ services:
 
   yomu-core-api:
     build:
-      context: ./yomu-core-api
+      context: ../yomu-core-api
       dockerfile: Dockerfile
     container_name: yomu-core-api
     ports:
@@ -52,7 +50,7 @@ services:
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_VHOST: /
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      JWT_SECRET: ${JWT_SECRET:-yomu-dev-secret-key-change-in-production-min32chars}
       PORT: 8080
     depends_on:
       postgres:
@@ -62,7 +60,7 @@ services:
 
   yomu-gateway:
     build:
-      context: ./yomu-gateway
+      context: ../yomu-gateway
       dockerfile: Dockerfile
     container_name: yomu-gateway
     ports:
@@ -70,7 +68,7 @@ services:
     environment:
       CORE_API_URL: http://yomu-core-api:8080
       GAMIFICATION_ENGINE_URL: http://yomu-gamification-engine:8081
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      JWT_SECRET: ${JWT_SECRET:-yomu-dev-secret-key-change-in-production-min32chars}
       YOMU_WEB_URL: http://yomu-web:3000
     depends_on:
       - yomu-core-api
@@ -78,7 +76,7 @@ services:
 
   yomu-gamification-engine:
     build:
-      context: ./yomu-gamification-engine
+      context: ../yomu-gamification-engine
       dockerfile: Dockerfile
     container_name: yomu-gamification-engine
     ports:
@@ -95,7 +93,7 @@ services:
 
   yomu-web:
     build:
-      context: ./yomu-web
+      context: ../yomu-web
       dockerfile: Dockerfile
     container_name: yomu-web
     ports:
