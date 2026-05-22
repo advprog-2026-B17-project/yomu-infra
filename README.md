@@ -19,7 +19,7 @@ Production uses managed services (NOT in this repo):
 | RabbitMQ | CloudAMQP |
 | Frontend | Vercel |
 | Backend API | Railway (yomu-core-api) |
-| Gamification Engine | Railway (yomu-gamification-engine) |
+| Gamification API | Railway (yomu-gamification-api) |
 
 ## Local Development
 
@@ -43,10 +43,14 @@ RabbitMQ will be available at:
 docker-compose up -d postgres rabbitmq
 
 # Connect to PostgreSQL and run schemas
-psql -h localhost -U postgres -d yomu -f init-scripts/01-auth-schema.sql
-psql -h localhost -U postgres -d yomu -f init-scripts/02-quiz-schema.sql
-psql -h localhost -U postgres -d yomu -f init-scripts/03-gamification-schema.sql
+# Auth and Quiz schemas (applied to yomu-core database)
+psql -h localhost -U postgres -d postgres -f init-scripts/01-auth-schema.sql
+psql -h localhost -U postgres -d postgres -f init-scripts/02-quiz-schema.sql
+# Gamification schema (applied to yomu-gamification database)
+psql -h localhost -U postgres -d postgres -f init-scripts/03-gamification-schema.sql
 ```
+
+Note: Each microservice owns its schema. The gamification API should only access `gamification.*` tables, and core API should only access `auth.*` and `quiz.*` tables.
 
 ### For Production (Render PostgreSQL)
 
