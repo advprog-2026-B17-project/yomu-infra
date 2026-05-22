@@ -86,6 +86,31 @@ CREATE TABLE gamification.notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE gamification.processed_events (
+    event_id VARCHAR(100) PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    processed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE gamification.user_profiles (
+    user_id UUID PRIMARY KEY,
+    username VARCHAR(100),
+    display_name VARCHAR(255),
+    avatar_url VARCHAR(500),
+    total_xp BIGINT NOT NULL DEFAULT 0,
+    level INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE gamification.user_activity_stats (
+    user_id UUID PRIMARY KEY,
+    readings_completed INTEGER NOT NULL DEFAULT 0,
+    quiz_attempts INTEGER NOT NULL DEFAULT 0,
+    average_accuracy DECIMAL(5,2),
+    last_activity_at TIMESTAMP WITH TIME ZONE
+);
+
 CREATE INDEX idx_clan_members_user ON gamification.clan_members(user_id);
 CREATE INDEX idx_clan_members_clan ON gamification.clan_members(clan_id);
 CREATE INDEX idx_user_achievements_user ON gamification.user_achievements(user_id);
