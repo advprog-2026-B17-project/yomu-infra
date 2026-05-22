@@ -26,3 +26,20 @@ CREATE TABLE auth.sessions (
 CREATE INDEX idx_users_username ON auth.users(username);
 CREATE INDEX idx_users_email ON auth.users(email);
 CREATE INDEX idx_sessions_user_id ON auth.sessions(user_id);
+
+CREATE SCHEMA IF NOT EXISTS outbox;
+
+CREATE TABLE outbox.outbox_events (
+    id UUID PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    event_version INTEGER NOT NULL DEFAULT 1,
+    aggregate_type VARCHAR(100),
+    aggregate_id UUID,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    published_at TIMESTAMP WITH TIME ZONE,
+    publish_attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+);
+
+CREATE INDEX idx_outbox_unpublished ON outbox.outbox_events(created_at) WHERE published_at IS NULL;
